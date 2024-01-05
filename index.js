@@ -1,27 +1,44 @@
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql');
+const express = require("express");
+const cors = require("cors");
 require('dotenv').config();
-const jwt = require("jsonwebtoken");
+const multer = require('multer');
+const db = require("./models");
+const authRouter = require("./routes/Authentication");
+const postsRouter = require("./routes/Posts");
 
-const app = express();
-const port = process.env.PORT || 5000;
+db.sequelize.sync()
+    .then(() => {
+        const app = express();
 
-app.use(cors());
-app.use(express.json());
+        app.use(cors());
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
+        app.use('/static', express.static('uploads'));
+        app.set('view engine', 'ejs');
 
-const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "plantix",
-    multipleStatements: true
-});
+        app.use("/auth", authRouter);
+        app.use("/posts", postsRouter);
 
-app.get('/', (req, res) => {
-    res.send('Welcome To Plantix.')
-})
+        app.use((err, req, res, next) => {
+            if (err) {
+                if (err instanceof multer.MulterError) {
+                    res.status(500).send("There was an upload error!");
+                } else {
+                    res.status(500).send(err.message);
+                }
+            } else {
+                res.send("success");
+            }
+        });
 
-app.listen(port, () => {
-    console.log(`listening at ${port}`)
-})
+        app.get('/', (req, res) => {
+            res.send('Welcome to Plantix.');
+        })
+
+        app.listen(5000, () => {
+            console.log("Server running on port 5000");
+        });
+    })
+    .catch((error) => {
+        console.log(`error: ${error.message}`);
+    });
