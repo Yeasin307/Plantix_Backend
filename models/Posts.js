@@ -6,10 +6,6 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
-        type: {
-            type: DataTypes.ENUM('Rice', 'Wheat', 'Maize', 'Potato'),
-            allowNull: false
-        },
         title: {
             type: DataTypes.STRING(200),
             allowNull: false

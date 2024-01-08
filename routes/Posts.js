@@ -47,33 +47,24 @@ const upload = multer({
 
 router.get("/", verifyToken, async (req, res) => {
     try {
-        const categories = await Categories.findAll({
-            order: [
-                ['position', 'ASC'],
-                [{ as: 'Child', model: Categories }, 'position', 'ASC']
-            ],
+        const posts = await Posts.findAll({
             include: [
                 {
-                    as: 'Parent',
-                    model: Categories
+                    as: 'createdByUser',
+                    model: Users
                 },
                 {
-                    as: 'Child',
-                    model: Categories,
-                    where: {
-                        active: '1',
-                        deleted: '0'
-                    },
-                    required: false
+                    as: 'updatedByUser',
+                    model: Users
                 }
             ]
         });
 
-        if (!categories) {
+        if (!posts) {
             res.status(400).json({ error: "Bad Request!" });
         }
         else {
-            res.status(200).send(categories);
+            res.status(200).send(posts);
         }
     }
     catch (error) {
@@ -81,7 +72,7 @@ router.get("/", verifyToken, async (req, res) => {
     }
 });
 
-router.post("/category-details", verifyToken, async (req, res) => {
+router.post("/post-details", verifyToken, async (req, res) => {
     try {
         const { id } = req.body;
         const category = await Categories.findOne({
@@ -131,23 +122,15 @@ router.post("/category-details", verifyToken, async (req, res) => {
 router.post("/create", verifyToken, upload.single("image"), async (req, res) => {
 
     try {
-        let { name, description, parentId, position, userId } = req.body;
+        let { title, description, userId } = req.body;
 
-        if (parentId == '') {
-            parentId = null
-        }
+        const post = await Posts.create({ title, description, image: req.file.filename, createdBy: userId, updatedBy: userId });
 
-        if (position == '') {
-            position = 99999
-        }
-
-        const category = await Categories.create({ name, description, parentId, image: req.file.filename, position, createdBy: userId, updatedBy: userId });
-
-        if (!category) {
+        if (!post) {
             res.status(400).json({ error: "Bad Request!" });
         }
         else {
-            res.status(200).send("Created Category Successfully!");
+            res.status(200).send("Posted Successfully!");
         }
 
     }
